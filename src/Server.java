@@ -1,40 +1,47 @@
 package src;
 
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 
 public class Server {
 
-    public DatagramSocket datagramSocket;
-    public InetAddress inetAddress;
-    public byte[] buffer = new byte[256];
+    ServerSocket serverSocket;
 
-    public Server(DatagramSocket datagramSocket){
-        this.datagramSocket = datagramSocket;
+    public Server(ServerSocket socket){
+        this.serverSocket = socket;
     }
 
-    public void receiveThenSend(){
-        while (true){
-            try {
-                DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length);
-                datagramSocket.receive(datagramPacket);
-                String messageFromClient = new String(datagramPacket.getData(),0, datagramPacket.getLength());
-                inetAddress = datagramPacket.getAddress();
-                System.out.println("Message from Client " + inetAddress.getHostAddress() + ":" + datagramPacket.getPort() + " : " +  messageFromClient);
-                datagramPacket = new DatagramPacket(buffer,buffer.length,inetAddress, datagramPacket.getPort());
-                datagramSocket.send(datagramPacket);
-            }catch (Exception e){
-                e.printStackTrace();
+    public void startServer(){
+        try {
+            while (!serverSocket.isClosed()){
+                Socket socket = serverSocket.accept();
+                System.out.println("A new Client has joined the chat !");
+                ClientHandler clientHandler = new ClientHandler(socket);
+                Thread thread = new Thread(clientHandler);
+                thread.start();
             }
+        }catch (Exception e){
+            e.printStackTrace();
+            closeServerSocket();
         }
     }
 
-    public static void main(String[] args) throws SocketException {
-        DatagramSocket datagramSocket1 = new DatagramSocket(1234);
-        Server server = new Server(datagramSocket1);
-        server.receiveThenSend();
+    public void closeServerSocket(){
+        try {
+            if(serverSocket != null){
+                serverSocket.close();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    public static void main(String[] args) {
+        try{
+            ServerSocket serverSocket1 = new ServerSocket(1234);
+            Server server = new Server(serverSocket1);
+            server.startServer();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

@@ -9,37 +9,94 @@ import java.util.Scanner;
 
 public class Client {
 
-    public DatagramSocket datagramSocket;
-    public InetAddress inetAddress;
-    public byte[] buffer = new byte[256];
+    Socket socket;
+    InputStreamReader inputStreamReader;
+    OutputStreamWriter outputStreamWriter;
+    BufferedReader bufferedReader;
+    BufferedWriter bufferedWriter;
 
-    public Client(DatagramSocket datagramSocket, InetAddress inetAddress){
-        this.datagramSocket = datagramSocket;
-        this.inetAddress = inetAddress;
-    }
+    String clientName;
+   public Client(Socket socket, String username){
+       try{
+           this.socket = socket;
+           this.inputStreamReader = new InputStreamReader(socket.getInputStream());
+           this.outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+           this.bufferedReader = new BufferedReader(inputStreamReader);
+           this.bufferedWriter = new BufferedWriter(outputStreamWriter);
+           this.clientName = username;
+//           sendMessage();
+       }catch (Exception e){
+           e.printStackTrace();
+           closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
+       }
 
-    public void sendThenReceive(){
-        Scanner scanner = new Scanner(System.in);
-        try{
-            while (true){
-                String msgToSend = scanner.nextLine();
-                buffer = msgToSend.getBytes();
-                DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length,inetAddress,1234);
-                datagramSocket.send(datagramPacket);
-                datagramSocket.receive(datagramPacket);
-                String msgFromServer = new String(datagramPacket.getData(),0, datagramPacket.getLength());
-                System.out.println("Server on "+ datagramPacket.getAddress().getHostAddress()+":" + datagramPacket.getPort() + " : " + msgFromServer);
-            }
+   }
+
+   public void sendMessage(){
+       try{
+           bufferedWriter.write(clientName);
+           bufferedWriter.newLine();
+           bufferedWriter.flush();
+           Scanner scanner = new Scanner(System.in);
+           while (socket.isConnected()){
+               String msgToSend = scanner.nextLine();
+               bufferedWriter.write(clientName+": "+ msgToSend);
+               bufferedWriter.newLine();
+               bufferedWriter.flush();
+           }
+       }catch (Exception e){
+           e.printStackTrace();
+           closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
+       }
+   }
+
+    public void closeEverything(Socket socket,InputStreamReader inputStreamReader, OutputStreamWriter outputStreamWriter, BufferedWriter bufferedWriter, BufferedReader bufferedReader){
+        try {
+            if(socket != null) socket.close();
+            if(inputStreamReader!= null) inputStreamReader.close();
+            if(outputStreamWriter != null) outputStreamWriter.close();
+            if(bufferedReader != null) bufferedReader.close();
+            if(bufferedWriter != null) bufferedWriter.close();
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) throws SocketException, UnknownHostException {
-        DatagramSocket datagramSocket1 = new DatagramSocket();
-        InetAddress inetAddress1 = InetAddress.getByName("localhost");
-        Client client = new Client(datagramSocket1,inetAddress1);
-        System.out.println("Send Datagram packets to Server");
-        client.sendThenReceive();
+    public void listenForMessage(){
+       new Thread(new Runnable() {
+           @Override
+           public void run() {
+               String messageFromGroupChat;
+
+               try {
+                   while (socket.isConnected()){
+                       messageFromGroupChat = bufferedReader.readLine();
+                       System.out.println(messageFromGroupChat);
+                   }
+               }catch (Exception e){
+                   e.printStackTrace();
+                   closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
+               }
+           }
+       }).start();
+    }
+
+//   public void startClient(){
+//       while(true){
+//           String msgReceived =
+//       }
+//   }
+    public static void main(String[] args) {
+       try {
+           Socket socket1 = new Socket("localhost",1234);
+           System.out.println("Enter your UserName : ");
+           Scanner scanner = new Scanner(System.in);
+           String username = scanner.nextLine();
+           Client client = new Client(socket1,username);
+           client.listenForMessage();
+           client.sendMessage();
+       }catch (Exception e){
+           e.printStackTrace();
+       }
     }
 }

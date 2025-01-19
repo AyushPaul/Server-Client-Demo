@@ -9,15 +9,15 @@ import java.util.ArrayList;
 
 public class ClientHandler implements Runnable{
 
-    Socket socket;
-    InputStreamReader inputStreamReader;
-    OutputStreamWriter outputStreamWriter;
-    BufferedReader bufferedReader;
-    BufferedWriter bufferedWriter;
+    private Socket socket;
+    private InputStreamReader inputStreamReader;
+    private OutputStreamWriter outputStreamWriter;
+    private BufferedReader bufferedReader;
+    private BufferedWriter bufferedWriter;
 
-    String clientName;
+    private String clientName;
 
-    static ArrayList<ClientHandler> clientList = new ArrayList<>();
+    public static ArrayList<ClientHandler> clientList = new ArrayList<>();
     public ClientHandler(Socket socket){
         try{
             this.socket = socket;
@@ -50,20 +50,33 @@ public class ClientHandler implements Runnable{
                 }
             }
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
             closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
         }
     }
 
     public void closeEverything(Socket socket,InputStreamReader inputStreamReader, OutputStreamWriter outputStreamWriter, BufferedWriter bufferedWriter, BufferedReader bufferedReader){
         clientList.remove(this);
-        BroadCastMessage("SERVER : " + this.clientName + " has left the chat!");
+//        BroadCastMessage();
+
         try {
-            if(socket != null) socket.close();
+            System.out.println(this.clientName + " has left the chat !");
+            for(ClientHandler clientHandler:clientList){
+                if(!clientHandler.clientName.equalsIgnoreCase(this.clientName)){
+                    clientHandler.bufferedWriter.write("SERVER : " + this.clientName + " has left the chat!");
+                    clientHandler.bufferedWriter.newLine();
+                    clientHandler.bufferedWriter.flush();
+                }
+            }
+
             if(inputStreamReader!= null) inputStreamReader.close();
             if(outputStreamWriter != null) outputStreamWriter.close();
             if(bufferedReader != null) bufferedReader.close();
             if(bufferedWriter != null) bufferedWriter.close();
+            if(socket != null) {
+                socket.close();
+            }
+
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -78,7 +91,8 @@ public class ClientHandler implements Runnable{
                 BroadCastMessage(msgToSend);
             }catch (Exception e){
                 closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
-                e.printStackTrace();
+                //e.printStackTrace();
+                break;
             }
         }
     }

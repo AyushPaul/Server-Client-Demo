@@ -26,7 +26,7 @@ public class Client {
            this.clientName = username;
 //           sendMessage();
        }catch (Exception e){
-           e.printStackTrace();
+           //e.printStackTrace();
            closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
        }
 
@@ -45,13 +45,14 @@ public class Client {
                bufferedWriter.flush();
            }
        }catch (Exception e){
-           e.printStackTrace();
+           //e.printStackTrace();
            closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
        }
    }
 
     public void closeEverything(Socket socket,InputStreamReader inputStreamReader, OutputStreamWriter outputStreamWriter, BufferedWriter bufferedWriter, BufferedReader bufferedReader){
         try {
+            System.out.println("Chatroom Session has ended.");
             if(socket != null) socket.close();
             if(inputStreamReader!= null) inputStreamReader.close();
             if(outputStreamWriter != null) outputStreamWriter.close();
@@ -74,7 +75,7 @@ public class Client {
                        System.out.println(messageFromGroupChat);
                    }
                }catch (Exception e){
-                   e.printStackTrace();
+                   //e.printStackTrace();
                    closeEverything(socket,inputStreamReader,outputStreamWriter,bufferedWriter,bufferedReader);
                }
            }
